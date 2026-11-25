@@ -59,7 +59,15 @@ export class FunctionSetAssignmentsListHelper extends EventEmitter<{
     >();
     private logger: Logger;
 
-    constructor({ client }: { client: SEP2Client }) {
+    constructor({
+        client,
+        loadCache = true,
+    }: {
+        client: SEP2Client;
+        // false when re-running discovery after the server has forgotten our
+        // registration: the cache then holds the previous registration's data
+        loadCache?: boolean;
+    }) {
         super();
 
         this.client = client;
@@ -69,6 +77,10 @@ export class FunctionSetAssignmentsListHelper extends EventEmitter<{
         });
 
         this.logger = logger;
+
+        if (!loadCache) {
+            return;
+        }
 
         void (async () => {
             const cachedData = await functionSetAssignmentsListCache.get();

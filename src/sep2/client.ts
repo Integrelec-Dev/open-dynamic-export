@@ -15,11 +15,11 @@ import type { RoleFlagsType } from './models/roleFlagsType.js';
 
 const USER_AGENT = 'open-dynamic-export';
 
-// the server responds with 403 Forbidden when our certificate is no longer
-// scoped to a resource, which happens when the server forgets our EndDevice
+// the server responds with 403 Forbidden when our certificate may no longer
+// access a resource, which happens when the server forgets our EndDevice
 // registration (for example when a CSIP-AUS test harness finalises a run)
 export type SEP2ClientEvents = {
-    scopeError: [AxiosError];
+    forbiddenError: [AxiosError];
 };
 
 export class SEP2Client extends EventEmitter<SEP2ClientEvents> {
@@ -77,11 +77,11 @@ export class SEP2Client extends EventEmitter<SEP2ClientEvents> {
                 exponentialDelay(retryCount, error, 100),
         });
 
-        // surface loss of scope so the caller can re-run discovery and
+        // surface 403 Forbidden so the caller can re-run discovery and
         // re-register, rather than retrying a dead href forever
         axiosClient.interceptors.response.use(undefined, (error: unknown) => {
             if (error instanceof AxiosError && error.response?.status === 403) {
-                this.emit('scopeError', error);
+                this.emit('forbiddenError', error);
             }
 
             throw error;

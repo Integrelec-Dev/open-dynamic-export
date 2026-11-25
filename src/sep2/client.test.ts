@@ -226,8 +226,8 @@ describe('axios-retry', () => {
     });
 });
 
-describe('scopeError', () => {
-    it('should emit scopeError and still reject on 403', async () => {
+describe('forbiddenError', () => {
+    it('should emit forbiddenError and still reject on 403', async () => {
         server.use(
             http.put('http://example.com/forbidden', () =>
                 HttpResponse.xml(
@@ -237,31 +237,31 @@ describe('scopeError', () => {
             ),
         );
 
-        const scopeError = vi.fn();
-        sep2Client.on('scopeError', scopeError);
+        const forbiddenError = vi.fn();
+        sep2Client.on('forbiddenError', forbiddenError);
 
         await expect(sep2Client.put('/forbidden', '<x/>')).rejects.toThrow();
 
-        expect(scopeError).toHaveBeenCalledTimes(1);
-        expect(scopeError.mock.calls[0]![0].response.status).toBe(403);
+        expect(forbiddenError).toHaveBeenCalledTimes(1);
+        expect(forbiddenError.mock.calls[0]![0].response.status).toBe(403);
 
-        sep2Client.off('scopeError', scopeError);
+        sep2Client.off('forbiddenError', forbiddenError);
     });
 
-    it('should not emit scopeError for other error statuses', async () => {
+    it('should not emit forbiddenError for other error statuses', async () => {
         server.use(
             http.get('http://example.com/missing', () =>
                 HttpResponse.xml('', { status: 404 }),
             ),
         );
 
-        const scopeError = vi.fn();
-        sep2Client.on('scopeError', scopeError);
+        const forbiddenError = vi.fn();
+        sep2Client.on('forbiddenError', forbiddenError);
 
         await expect(sep2Client.get('/missing')).rejects.toThrow();
 
-        expect(scopeError).not.toHaveBeenCalled();
+        expect(forbiddenError).not.toHaveBeenCalled();
 
-        sep2Client.off('scopeError', scopeError);
+        sep2Client.off('forbiddenError', forbiddenError);
     });
 });
