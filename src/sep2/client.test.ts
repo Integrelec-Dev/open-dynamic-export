@@ -225,3 +225,43 @@ describe('axios-retry', () => {
         expect(result).toEqual(null);
     });
 });
+
+describe('forbiddenError', () => {
+    it('should emit forbiddenError and still reject on 403', async () => {
+        server.use(
+            http.put('http://example.com/forbidden', () =>
+                HttpResponse.xml(
+                    '<Error xmlns="urn:ieee:std:2030.5:ns"><reasonCode>0</reasonCode><message>not scoped to access this resource</message></Error>',
+                    { status: 403 },
+                ),
+            ),
+        );
+
+        const forbiddenError = vi.fn();
+        sep2Client.on('forbiddenError', forbiddenError);
+
+        await expect(sep2Client.put('/forbidden', '<x/>')).rejects.toThrow();
+
+        expect(forbiddenError).toHaveBeenCalledTimes(1);
+        expect(forbiddenError.mock.calls[0]![0].response.status).toBe(403);
+
+        sep2Client.off('forbiddenError', forbiddenError);
+    });
+
+    it('should not emit forbiddenError for other error statuses', async () => {
+        server.use(
+            http.get('http://example.com/missing', () =>
+                HttpResponse.xml('', { status: 404 }),
+            ),
+        );
+
+        const forbiddenError = vi.fn();
+        sep2Client.on('forbiddenError', forbiddenError);
+
+        await expect(sep2Client.get('/missing')).rejects.toThrow();
+
+        expect(forbiddenError).not.toHaveBeenCalled();
+
+        sep2Client.off('forbiddenError', forbiddenError);
+    });
+});
