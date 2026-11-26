@@ -99,11 +99,15 @@ export class ControlLimitRampHelper {
                     type: target.type,
                     value: target.value,
                     rampTimeSeconds,
-                    endDateTime: rampTimeSeconds
-                        ? new Date(
-                              new Date().getTime() + rampTimeSeconds * 1000,
-                          )
-                        : null,
+                    // a rampTms of 0 is an explicit request to change
+                    // immediately, so only an absent rampTms falls back to
+                    // setGradW (sep.xsd DERControlBase.rampTms)
+                    endDateTime:
+                        rampTimeSeconds !== undefined
+                            ? new Date(
+                                  new Date().getTime() + rampTimeSeconds * 1000,
+                              )
+                            : null,
                 };
             }
         }

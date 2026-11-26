@@ -315,6 +315,48 @@ describe('ControlLimitRampHelper', () => {
         expect(helper.getRampedValue()).toBeCloseTo(2500, 0);
     });
 
+    it('should apply a rampTms of 0 immediately rather than at setGradW', () => {
+        vi.setSystemTime(new Date('2021-01-01T00:00:00Z'));
+        // setGradW = 1%/second, so 100 W/s against a 10kW nameplate
+        rampRateHelper.setDefaultDERControlRampRate(100);
+        rampRateHelper.onDerSample({ nameplate: { maxW: 10000 } });
+
+        helper.updateTarget({
+            type: 'active',
+            value: 5000,
+            rampTimeSeconds: undefined,
+        });
+        expect(helper.getRampedValue()).toBe(5000);
+
+        // at setGradW this 4000W change would take 40 seconds
+        helper.updateTarget({
+            type: 'active',
+            value: 1000,
+            rampTimeSeconds: 0,
+        });
+        expect(helper.getRampedValue()).toBe(1000);
+    });
+
+    it('should apply a rampTms of 0 immediately rather than soft-starting', () => {
+        vi.setSystemTime(new Date('2021-01-01T00:00:00Z'));
+        // no setGradW, so a control without rampTms would take 15 seconds
+        rampRateHelper.onDerSample({ nameplate: { maxW: 5000 } });
+
+        helper.updateTarget({
+            type: 'active',
+            value: 1500,
+            rampTimeSeconds: undefined,
+        });
+        expect(helper.getRampedValue()).toBe(1500);
+
+        helper.updateTarget({
+            type: 'active',
+            value: 500,
+            rampTimeSeconds: 0,
+        });
+        expect(helper.getRampedValue()).toBe(500);
+    });
+
     it('should complete a rampTms ramp in hundredths of a second, not seconds', () => {
         vi.setSystemTime(new Date('2021-01-01T00:00:00Z'));
         rampRateHelper.onDerSample({
